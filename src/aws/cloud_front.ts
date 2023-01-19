@@ -1,6 +1,7 @@
 import {
   CloudFrontClient,
   CreateDistributionCommand,
+  OriginProtocolPolicy,
   ViewerProtocolPolicy,
 } from '@aws-sdk/client-cloudfront';
 import { awsConfig } from '../config';
@@ -10,25 +11,34 @@ const client = new CloudFrontClient(awsConfig);
 const createCloudFront = async (cloudFrontName: string) => {
   const distribution = new CreateDistributionCommand({
     DistributionConfig: {
-      CallerReference: 'testdistribution',
-      Enabled: true,
+      CallerReference: cloudFrontName,
+      Enabled: false,
       Origins: {
         Quantity: 1,
         Items: [
           {
-            Id: cloudFrontName,
-            DomainName: `${cloudFrontName}.s3-website-us-east-1.amazonaws.com`,
-            S3OriginConfig: {
-              OriginAccessIdentity: ``,
+            Id: `${cloudFrontName}.s3-website.-us-east-1.amazonaws.com`,
+            DomainName: `${cloudFrontName}.s3-website.-us-east-1.amazonaws.com`,
+            CustomOriginConfig: {
+              HTTPPort: 80,
+              HTTPSPort: 80,
+              OriginProtocolPolicy: OriginProtocolPolicy.http_only,
             },
           },
         ],
       },
       DefaultCacheBehavior: {
-        TargetOriginId: `${cloudFrontName}.s3-website-us-east-1.amazonaws.com`,
+        TargetOriginId: `${cloudFrontName}.s3-website.-us-east-1.amazonaws.com`,
         ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
+        MinTTL: 0,
+        ForwardedValues: {
+          QueryString: true,
+          Cookies: {
+            Forward: 'none',
+          },
+        },
       },
-      Comment: 'test distribution',
+      Comment: '',
     },
   });
 

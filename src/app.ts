@@ -4,9 +4,9 @@ import { createS3 } from './aws/s3';
 const run = () => {
   const globalName = 'try.test.lumi';
 
-  // createS3(globalName);
-
-  createCloudFront(globalName);
+  createS3(globalName).then(() => {
+    createCloudFront(globalName);
+  });
 };
 
 run();
