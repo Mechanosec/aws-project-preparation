@@ -8,7 +8,7 @@ import { awsConfig } from '../config';
 
 const client = new CloudFrontClient(awsConfig);
 
-const createCloudFront = async (
+const cloudFrontHandler = async (
   cloudFrontName: string,
   ACMCertificateArn: string
 ) => {
@@ -61,4 +61,4 @@ const createCloudFront = async (
   }
 };
 
-export { createCloudFront };
+export { cloudFrontHandler };

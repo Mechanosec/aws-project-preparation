@@ -9,7 +9,7 @@ import { awsConfig } from '../config';
 
 const client = new S3Client(awsConfig);
 
-const createS3 = async (bucketName: string) => {
+const S3Handler = async (bucketName: string) => {
   const bucket = new CreateBucketCommand({
     Bucket: bucketName,
     ACL: BucketCannedACL.public_read_write,
@@ -50,4 +50,4 @@ const createS3 = async (bucketName: string) => {
   }
 };
 
-export { createS3 };
+export { S3Handler };
