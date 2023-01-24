@@ -1,9 +1,12 @@
+import { acmHandler } from './aws/acm';
 import { cloudFrontHandler } from './aws/cloud_front';
 import { route53Handler } from './aws/route53';
 import { S3Handler } from './aws/s3';
 
 const run = async () => {
-  const bucketName = 'test.mycapsule.place';
+  const domainName = 'asdddd.place';
+
+  await acmHandler(domainName);
 
   // await S3Handler(bucketName);
 

@@ -26,6 +26,7 @@ const cloudFrontHandler = async (
       },
     },
   ];
+
   const distribution = new CreateDistributionCommand({
     DistributionConfig: {
       CallerReference: bucketName,
