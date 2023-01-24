@@ -1,7 +1,10 @@
 import {
   CloudFrontClient,
   CreateDistributionCommand,
+  MinimumProtocolVersion,
+  Origin,
   OriginProtocolPolicy,
+  SSLSupportMethod,
   ViewerProtocolPolicy,
 } from '@aws-sdk/client-cloudfront';
 import { awsConfig } from '../config';
@@ -9,36 +12,39 @@ import { awsConfig } from '../config';
 const client = new CloudFrontClient(awsConfig);
 
 const cloudFrontHandler = async (
-  cloudFrontName: string,
+  bucketName: string,
   ACMCertificateArn: string
 ) => {
+  const origins: Origin[] = [
+    {
+      Id: `${bucketName}.s3-website-us-east-1.amazonaws.com`,
+      DomainName: `${bucketName}.s3-website.-us-east-1.amazonaws.com`,
+      CustomOriginConfig: {
+        HTTPPort: 80,
+        HTTPSPort: 80,
+        OriginProtocolPolicy: OriginProtocolPolicy.https_only,
+      },
+    },
+  ];
   const distribution = new CreateDistributionCommand({
     DistributionConfig: {
-      CallerReference: cloudFrontName,
-      Enabled: true,
+      CallerReference: bucketName,
+      Enabled: false,
       Origins: {
-        Quantity: 1,
-        Items: [
-          {
-            Id: `${cloudFrontName}.s3-website.-us-east-1.amazonaws.com`,
-            DomainName: `${cloudFrontName}.s3-website.-us-east-1.amazonaws.com`,
-            CustomOriginConfig: {
-              HTTPPort: 80,
-              HTTPSPort: 80,
-              OriginProtocolPolicy: OriginProtocolPolicy.https_only,
-            },
-          },
-        ],
+        Quantity: origins.length,
+        Items: origins,
       },
       Aliases: {
         Quantity: 1,
-        Items: [cloudFrontName],
+        Items: [bucketName],
       },
       ViewerCertificate: {
         ACMCertificateArn,
+        SSLSupportMethod: SSLSupportMethod.sni_only,
+        MinimumProtocolVersion: MinimumProtocolVersion.TLSv1_2_2021,
       },
       DefaultCacheBehavior: {
-        TargetOriginId: `${cloudFrontName}.s3-website.-us-east-1.amazonaws.com`,
+        TargetOriginId: `${bucketName}.s3-website-us-east-1.amazonaws.com`,
         ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
         MinTTL: 0,
         ForwardedValues: {

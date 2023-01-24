@@ -4,6 +4,8 @@ import {
   BucketCannedACL,
   PutBucketPolicyCommand,
   PutBucketWebsiteCommand,
+  GetBucketWebsiteCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { awsConfig } from '../config';
 

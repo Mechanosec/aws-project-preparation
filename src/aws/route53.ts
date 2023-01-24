@@ -9,12 +9,12 @@ import { awsConfig } from '../config';
 const client = new Route53Client(awsConfig);
 
 const route53Handler = async (
-  hostedZoneName: string,
-  distribution: { id: string; name: string },
+  hostedZoneId: string,
+  distribution: { hostedZoneId: string; name: string },
   recordName: string
 ) => {
   const distributionRecord = new ChangeResourceRecordSetsCommand({
-    HostedZoneId: hostedZoneName,
+    HostedZoneId: hostedZoneId,
     ChangeBatch: {
       Changes: [
         {
@@ -23,7 +23,7 @@ const route53Handler = async (
             Name: recordName,
             Type: RRType.A,
             AliasTarget: {
-              HostedZoneId: distribution.id,
+              HostedZoneId: distribution.hostedZoneId,
               DNSName: distribution.name,
               EvaluateTargetHealth: false,
             },
@@ -35,6 +35,8 @@ const route53Handler = async (
 
   try {
     await client.send(distributionRecord);
+
+    console.log('_____RECORD CREATED_____');
   } catch (error) {
     console.log(error);
   }
