@@ -1,28 +1,14 @@
-import { acmHandler } from './aws/acm';
-import { cloudFrontHandler } from './aws/cloud_front';
-import { route53Handler } from './aws/route53';
-import { S3Handler } from './aws/s3';
+import * as dotenv from 'dotenv';
+import express, { Express, Request, Response } from 'express';
+dotenv.config();
 
-const run = async () => {
-  const domainName = 'asdddd.place';
+const app: Express = express();
+const port: number = Number(process.env.PORT);
 
-  await acmHandler(domainName);
+app.get('/', (req: Request, res: Response) => {
+  res.send('Hello World!');
+});
 
-  // await S3Handler(bucketName);
-
-  // await cloudFrontHandler(
-  //   bucketName,
-  //   'arn:aws:acm:us-east-1:830658900665:certificate/a5517f2d-28d7-465f-a273-f7fef6225512'
-  // );
-
-  // await route53Handler(
-  //   'Z055208932793K9V9CNJI',
-  //   {
-  //     hostedZoneId: 'Z2FDTNDATAQYW2', //This is always the hosted zone ID when you create an alias record that routes traffic to a CloudFront distribution.
-  //     name: 'd3lyfxgzpgcekf.cloudfront.net',
-  //   },
-  //   bucketName,
-  // );
-};
-
-run();
+app.listen(port, () => {
+  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+});
