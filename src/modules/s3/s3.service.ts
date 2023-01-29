@@ -5,14 +5,18 @@ import {
   PutBucketWebsiteCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { awsConfig } from '../../config';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { awsConfig } from '../../utils/awsConfig';
 
+@Injectable()
 export class S3Service {
-  constructor(private readonly client: S3Client) {
+  private readonly client: S3Client;
+
+  constructor() {
     this.client = new S3Client(awsConfig);
   }
 
-  async store(bucketName: string) {
+  async create(bucketName: string) {
     const bucket = new CreateBucketCommand({
       Bucket: bucketName,
       ACL: BucketCannedACL.public_read_write,
@@ -49,13 +53,12 @@ export class S3Service {
 
       console.log('_____BUCKET CREATED_____');
     } catch (error) {
-      throw new Error(error);
+      throw new BadRequestException(error);
     }
   }
 
-  update() {}
-
-  delete() {}
-
-  get() {}
+  // async update() {}
+  // async delete() {}
+  // async getAll() {}
+  // async getOne() {}
 }
