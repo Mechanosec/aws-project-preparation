@@ -3,8 +3,8 @@ import {
   CertificateStatus,
   DomainValidation,
 } from '@aws-sdk/client-acm';
-import { ChangeAction, RRType } from '@aws-sdk/client-route-53';
-import { Body, Controller, Post } from '@nestjs/common';
+import { ChangeAction, HostedZone, RRType } from '@aws-sdk/client-route-53';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { AcmService } from './modules/acm/acm.service';
 import { CloudFrontService } from './modules/cloud-front/cloud-front.service';
@@ -26,7 +26,6 @@ export class AppController {
     @Body()
     dataProject: CreateProjectDto,
   ) {
-    const hostedZoneId = 'Z055208932793K9V9CNJI';
     const certificateArn = await this.acmService.create(dataProject.domainName);
 
     let certificate: CertificateDetail;
@@ -40,7 +39,7 @@ export class AppController {
       }
     }
 
-    await this.route53Service.create(hostedZoneId, [
+    await this.route53Service.create(dataProject.hostedZoneId, [
       {
         Action: ChangeAction.CREATE,
         ResourceRecordSet: {
@@ -69,7 +68,7 @@ export class AppController {
       certificateArn,
     );
 
-    await this.route53Service.create(hostedZoneId, [
+    await this.route53Service.create(dataProject.hostedZoneId, [
       {
         Action: ChangeAction.CREATE,
         ResourceRecordSet: {
@@ -90,5 +89,16 @@ export class AppController {
       domain: dataProject.domainName,
       cloudFrontId: cloudFront.Id,
     };
+  }
+
+  @Get('/hosted-zones')
+  async getRouters() {
+    const hostedZoneNames = await this.route53Service.getAll();
+    return hostedZoneNames.map((hostedZone: HostedZone) => {
+      return {
+        id: hostedZone.Id.replace('/hostedzone/', ''),
+        name: hostedZone.Name,
+      };
+    });
   }
 }
