@@ -84,6 +84,8 @@ export class AppController {
       },
     ]);
 
+    console.log('_____ALL CREATED_____');
+
     return {
       domain: dataProject.domainName,
       cloudFrontId: cloudFront.Id,
