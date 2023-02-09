@@ -1,8 +1,11 @@
 import {
   ACMClient,
   CertificateDetail,
+  CertificateSummary,
   DescribeCertificateCommand,
   DescribeCertificateCommandOutput,
+  ListCertificatesCommand,
+  ListCertificatesCommandOutput,
   RequestCertificateCommand,
   RequestCertificateCommandOutput,
   ValidationMethod,
@@ -37,7 +40,7 @@ export class AcmService {
     }
   }
 
-  async get(certificateArn: string): Promise<CertificateDetail> {
+  async getByArn(certificateArn: string): Promise<CertificateDetail> {
     try {
       const certificate = new DescribeCertificateCommand({
         CertificateArn: certificateArn,
@@ -48,6 +51,21 @@ export class AcmService {
       );
 
       return response.Certificate;
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error);
+    }
+  }
+
+  async getList(): Promise<CertificateSummary[]> {
+    try {
+      const certificateList = new ListCertificatesCommand({});
+
+      const response: ListCertificatesCommandOutput = await this.client.send(
+        certificateList,
+      );
+
+      return response.CertificateSummaryList;
     } catch (error) {
       console.log(error);
       throw new BadRequestException(error);

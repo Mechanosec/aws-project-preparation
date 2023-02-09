@@ -7,6 +7,11 @@ export class CreateProjectDto {
 
   @IsString()
   @IsNotEmpty()
+  @IsOptional()
+  subdomainName: string;
+
+  @IsString()
+  @IsNotEmpty()
   hostedZoneId: string;
 
   @IsOptional()

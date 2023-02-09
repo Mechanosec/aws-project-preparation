@@ -1,6 +1,8 @@
 import {
+  CacheBehavior,
   CloudFrontClient,
   CreateDistributionCommand,
+  Distribution,
   MinimumProtocolVersion,
   Origin,
   OriginProtocolPolicy,
@@ -18,19 +20,12 @@ export class CloudFrontService {
     this.client = new CloudFrontClient(awsConfig);
   }
 
-  async create(bucketName: string, ACMCertificateArn: string) {
-    const origins: Origin[] = [
-      {
-        Id: `${bucketName}.s3-website-us-east-1.amazonaws.com`,
-        DomainName: `${bucketName}.s3-website.-us-east-1.amazonaws.com`,
-        CustomOriginConfig: {
-          HTTPPort: 80,
-          HTTPSPort: 80,
-          OriginProtocolPolicy: OriginProtocolPolicy.https_only,
-        },
-      },
-    ];
-
+  async create(
+    bucketName: string,
+    ACMCertificateArn: string,
+    origins: Origin[],
+    cacheBehaviors: CacheBehavior[],
+  ): Promise<Distribution> {
     const distribution = new CreateDistributionCommand({
       DistributionConfig: {
         CallerReference: bucketName,
@@ -42,6 +37,10 @@ export class CloudFrontService {
         Aliases: {
           Quantity: 1,
           Items: [bucketName],
+        },
+        CacheBehaviors: {
+          Quantity: cacheBehaviors.length,
+          Items: cacheBehaviors,
         },
         ViewerCertificate: {
           ACMCertificateArn,
