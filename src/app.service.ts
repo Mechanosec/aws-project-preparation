@@ -154,6 +154,9 @@ export class AppService {
         PathPattern: 'main/*',
         TargetOriginId: `${domainName}.s3-website-us-east-1.amazonaws.com`,
         ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
+        /**
+         * MinTTL, ForwardedValues - магия которую просит aws, выставляю дефолтные значения
+         */
         MinTTL: 0,
         ForwardedValues: {
           QueryString: true,
@@ -175,6 +178,9 @@ export class AppService {
       defaultCacheBehavior = {
         TargetOriginId: `${process.env.FUNNEL_FUEL_ORIGIN_NAME}`,
         ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
+        /**
+         * MinTTL, ForwardedValues - магия которую просит aws, выставляю дефолтные значения
+         */
         MinTTL: 0,
         ForwardedValues: {
           QueryString: true,
@@ -189,6 +195,9 @@ export class AppService {
       defaultCacheBehavior = {
         TargetOriginId: `${domainName}.s3-website-us-east-1.amazonaws.com`,
         ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
+        /**
+         * MinTTL, ForwardedValues - магия которую просит aws, выставляю дефолтные значения
+         */
         MinTTL: 0,
         ForwardedValues: {
           QueryString: true,
@@ -206,30 +215,6 @@ export class AppService {
       cacheBehaviors,
       defaultCacheBehavior,
     );
-
-    // if (isConstructor) {
-    //   cacheBehaviors.push(
-    //     {
-    //       PathPattern: '*',
-    //       TargetOriginId: `${domainName}.s3-website-us-east-1.amazonaws.com`,
-    //       ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
-    //     },
-    //     {
-    //       PathPattern: 'main/*',
-    //       TargetOriginId: `${domainName}.s3-website-us-east-1.amazonaws.com`,
-    //       ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
-    //       LambdaFunctionAssociations: {
-    //         Quantity: 1,
-    //         Items: [
-    //           {
-    //             EventType: EventType.origin_request,
-    //             LambdaFunctionARN: process.env.FUNNEL_FUEL_LAMBDA,
-    //           },
-    //         ],
-    //       },
-    //     },
-    //   );
-    // }
 
     return cloudFront;
   }
