@@ -2,6 +2,7 @@ import {
   CacheBehavior,
   CloudFrontClient,
   CreateDistributionCommand,
+  DefaultCacheBehavior,
   Distribution,
   MinimumProtocolVersion,
   Origin,
@@ -25,6 +26,7 @@ export class CloudFrontService {
     ACMCertificateArn: string,
     origins: Origin[],
     cacheBehaviors: CacheBehavior[],
+    defaultCacheBehavior: DefaultCacheBehavior,
   ): Promise<Distribution> {
     const distribution = new CreateDistributionCommand({
       DistributionConfig: {
@@ -47,17 +49,7 @@ export class CloudFrontService {
           SSLSupportMethod: SSLSupportMethod.sni_only,
           MinimumProtocolVersion: MinimumProtocolVersion.TLSv1_2_2021,
         },
-        DefaultCacheBehavior: {
-          TargetOriginId: `${bucketName}.s3-website-us-east-1.amazonaws.com`,
-          ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
-          MinTTL: 0,
-          ForwardedValues: {
-            QueryString: true,
-            Cookies: {
-              Forward: 'none',
-            },
-          },
-        },
+        DefaultCacheBehavior: defaultCacheBehavior,
         Comment: '',
       },
     });

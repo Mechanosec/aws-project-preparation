@@ -6,7 +6,9 @@ import {
 } from '@aws-sdk/client-acm';
 import {
   CacheBehavior,
+  DefaultCacheBehavior,
   Distribution,
+  EventType,
   Origin,
   OriginProtocolPolicy,
   ViewerProtocolPolicy,
@@ -74,7 +76,14 @@ export class AppService {
     certificateArn: string,
     certificateDomainValidation: DomainValidation,
     hostedZoneId: string,
-  ) {
+  ): Promise<boolean> {
+    let certificate: CertificateDetail;
+    certificate = await this.acmService.getByArn(certificateArn);
+
+    if (certificate.Status === CertificateStatus.ISSUED) {
+      return true;
+    }
+
     let retryCount = this.retryCount;
 
     await this.route53Service.create(hostedZoneId, [
@@ -91,7 +100,6 @@ export class AppService {
       },
     ]);
 
-    let certificate: CertificateDetail;
     while (true) {
       await sleep(5000);
       certificate = await this.acmService.getByArn(certificateArn);
@@ -106,6 +114,8 @@ export class AppService {
 
       retryCount--;
     }
+
+    return true;
   }
 
   async aggregateCloudFront(
@@ -113,36 +123,80 @@ export class AppService {
     certificateArn: string,
     isConstructor: boolean,
   ): Promise<Distribution> {
-    const origins: Origin[] = [
-      {
-        Id: `${domainName}.s3-website-us-east-1.amazonaws.com`,
-        DomainName: `${domainName}.s3-website.-us-east-1.amazonaws.com`,
-        CustomOriginConfig: {
-          HTTPPort: 80,
-          HTTPSPort: 80,
-          OriginProtocolPolicy: OriginProtocolPolicy.https_only,
-        },
-      },
-    ];
+    const origins: Origin[] = [];
 
-    const cacheBehaviors: CacheBehavior[] = [
-      {
-        PathPattern: '*',
+    const cacheBehaviors: CacheBehavior[] = [];
+    const defaultOrigin: Origin = {
+      Id: `${domainName}.s3-website-us-east-1.amazonaws.com`,
+      DomainName: `${domainName}.s3-website.-us-east-1.amazonaws.com`,
+      CustomOriginConfig: {
+        HTTPPort: 80,
+        HTTPSPort: 80,
+        OriginProtocolPolicy: OriginProtocolPolicy.https_only,
+      },
+    };
+    let defaultCacheBehavior: DefaultCacheBehavior;
+    if (isConstructor) {
+      origins.push(
+        {
+          Id: `${process.env.FUNNEL_FUEL_ORIGIN_NAME}`,
+          DomainName: `${process.env.FUNNEL_FUEL_ORIGIN_NAME}`,
+          CustomOriginConfig: {
+            HTTPPort: 80,
+            HTTPSPort: 80,
+            OriginProtocolPolicy: OriginProtocolPolicy.https_only,
+          },
+        },
+        defaultOrigin,
+      );
+
+      cacheBehaviors.push({
+        PathPattern: 'main/*',
         TargetOriginId: `${domainName}.s3-website-us-east-1.amazonaws.com`,
         ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
-      },
-    ];
-
-    if (isConstructor) {
-      origins.push({
-        Id: `${process.env.FUNNEL_FUEL_ORIGIN_NAME}`,
-        DomainName: `${process.env.FUNNEL_FUEL_ORIGIN_NAME}`,
-        CustomOriginConfig: {
-          HTTPPort: 80,
-          HTTPSPort: 80,
-          OriginProtocolPolicy: OriginProtocolPolicy.https_only,
+        MinTTL: 0,
+        ForwardedValues: {
+          QueryString: true,
+          Cookies: {
+            Forward: 'none',
+          },
+        },
+        LambdaFunctionAssociations: {
+          Quantity: 1,
+          Items: [
+            {
+              EventType: EventType.origin_request,
+              LambdaFunctionARN: process.env.FUNNEL_FUEL_LAMBDA,
+            },
+          ],
         },
       });
+
+      defaultCacheBehavior = {
+        TargetOriginId: `${process.env.FUNNEL_FUEL_ORIGIN_NAME}`,
+        ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
+        MinTTL: 0,
+        ForwardedValues: {
+          QueryString: true,
+          Cookies: {
+            Forward: 'none',
+          },
+        },
+      };
+    } else {
+      origins.push(defaultOrigin);
+
+      defaultCacheBehavior = {
+        TargetOriginId: `${domainName}.s3-website-us-east-1.amazonaws.com`,
+        ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
+        MinTTL: 0,
+        ForwardedValues: {
+          QueryString: true,
+          Cookies: {
+            Forward: 'none',
+          },
+        },
+      };
     }
 
     const cloudFront = await this.cloudFrontService.create(
@@ -150,7 +204,32 @@ export class AppService {
       certificateArn,
       origins,
       cacheBehaviors,
+      defaultCacheBehavior,
     );
+
+    // if (isConstructor) {
+    //   cacheBehaviors.push(
+    //     {
+    //       PathPattern: '*',
+    //       TargetOriginId: `${domainName}.s3-website-us-east-1.amazonaws.com`,
+    //       ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
+    //     },
+    //     {
+    //       PathPattern: 'main/*',
+    //       TargetOriginId: `${domainName}.s3-website-us-east-1.amazonaws.com`,
+    //       ViewerProtocolPolicy: ViewerProtocolPolicy.allow_all,
+    //       LambdaFunctionAssociations: {
+    //         Quantity: 1,
+    //         Items: [
+    //           {
+    //             EventType: EventType.origin_request,
+    //             LambdaFunctionARN: process.env.FUNNEL_FUEL_LAMBDA,
+    //           },
+    //         ],
+    //       },
+    //     },
+    //   );
+    // }
 
     return cloudFront;
   }
